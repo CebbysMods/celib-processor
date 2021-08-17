@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+group = project.maven_group
+version = project.project_version
+archivesBaseName = project.project_name
+
+repositories {
+}
+
+dependencies {
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    withSourcesJar()
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archivesBaseName}" }
+    }
+}
