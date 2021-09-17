@@ -1,0 +1,77 @@
+package lv.cebbys.mcmods.celib.processor.structures.customized.method;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import lv.cebbys.mcmods.celib.processor.interfaces.MethodProvider;
+import lv.cebbys.mcmods.celib.processor.structures.types.ClassProfile;
+import lv.cebbys.mcmods.celib.processor.structures.types.MethodProfile;
+import lv.cebbys.mcmods.celib.processor.structures.types.customized.clazz.BasicClassProfile;
+import lv.cebbys.mcmods.celib.processor.structures.types.customized.field.BasicFieldProfile;
+import lv.cebbys.mcmods.celib.processor.structures.types.customized.method.BasicMethodProfile;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+public class AddToJsonObjectMethod implements MethodProvider {
+
+    private final MethodProfile<?> method;
+
+    public AddToJsonObjectMethod() {
+        method = BasicMethodProfile.of()
+                .setModifiers("private")
+                .setMethodName("addToJsonObject")
+                .setParameters(
+                        BasicFieldProfile.of().setParameterIndex(0).setName("json").setType(BasicClassProfile.of(JsonObject.class)),
+                        BasicFieldProfile.of().setParameterIndex(1).setName("name").setType(BasicClassProfile.of(String.class)),
+                        BasicFieldProfile.of().setParameterIndex(2).setName("data").setType(BasicClassProfile.of(Object.class)))
+                .addLine("if(data instanceof String s) {")
+                .addLine("\tjson.addProperty(name, s);")
+                .addLine("} else if (data instanceof Number s) {")
+                .addLine("\tjson.addProperty(name, s);")
+                .addLine("} else if (data instanceof Boolean s) {")
+                .addLine("\tjson.addProperty(name, s);")
+                .addLine("} else if (data instanceof Character s) {")
+                .addLine("\tjson.addProperty(name, s);")
+                .addLine("} else if(data instanceof List) {")
+                .addLine("\tJsonArray array = new JsonArray();")
+                .addLine("\t((List<Object>) data).forEach(element -> addToJsonArray(array, element));")
+                .addLine("\tjson.add(name, array);")
+                .addLine("} else if(data instanceof Map) {")
+                .addLine("\tJsonObject object = new JsonObject();")
+                .addLine("\t((Map<Object, Object>) data).forEach((key, value) -> {")
+                .addLine("\t\taddToJsonObject(object, key.toString(), value);")
+                .addLine("\t});")
+                .addLine("\tjson.add(name, object);")
+                .addLine("} else {")
+                .addLine("\tJsonObject object = new JsonObject();")
+                .addLine("\tArrays.asList(data.getClass().getDeclaredFields()).forEach(field -> {")
+                .addLine("\t\ttry {")
+                .addLine("\t\t\tfield.setAccessible(true);")
+                .addLine("\t\t\tString fieldName = field.getName();")
+                .addLine("\t\t\tObject fieldValue = field.get(data);")
+                .addLine("\t\t\taddToJsonObject(object, fieldName, fieldValue);")
+                .addLine("\t\t} catch (Exception e) {")
+                .addLine("\t\t\tthrow new RuntimeException(e);")
+                .addLine("\t\t}")
+                .addLine("\t});")
+                .addLine("\tjson.add(name, object);")
+                .addLine("}")
+                .addAdditionalImports(
+                        BasicClassProfile.of(Number.class),
+                        BasicClassProfile.of(Boolean.class),
+                        BasicClassProfile.of(Character.class),
+                        BasicClassProfile.of(List.class),
+                        BasicClassProfile.of(Map.class),
+                        BasicClassProfile.of(JsonArray.class),
+                        BasicClassProfile.of(Exception.class),
+                        BasicClassProfile.of(Arrays.class),
+                        BasicClassProfile.of(RuntimeException.class));
+
+    }
+
+    @Override
+    public MethodProfile<?> getMethod() {
+        return method;
+    }
+}
